@@ -41,12 +41,21 @@ myDB(async client => {
   app.route('/').get((req, res) => {
     res.render('pug', {
       title: 'Connected to Database',
-      message: 'Please login'
+      message: 'Please login',
+      showLogin: true
     });
   });
   
+  app.route('/login').post(passport.authenticate('local', { failureRedirect: '/' }), (req, res) => {
+    res.redirect('/profile');
+  });
+
+  app.route('/profile').get((req, res) => {
+    res.render(process.cwd() + '/views/pug/profile');
+  });
+
   // Serialization and deserialization here...
-  passport.serializeUser((user, done) => {
+passport.serializeUser((user, done) => {
   done(null, user._id);
 });
 
