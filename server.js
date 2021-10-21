@@ -50,7 +50,7 @@ myDB(async client => {
     res.redirect('/profile');
   });
 
-  app.route('/profile').get((req, res) => {
+  app.route('/profile').get(ensureAuthenticated, (req, res) => {
     res.render(process.cwd() + '/views/pug/profile');
   });
 
@@ -82,6 +82,14 @@ passport.use(new LocalStrategy(
     res.render('pug', {title: e, message: 'Unable to login'});
   });
 });
+
+// New middleware
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect('/');
+}
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
