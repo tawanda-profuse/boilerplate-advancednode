@@ -7,6 +7,7 @@ const session = require('express-session');
 const passport = require('passport');
 const ObjectID = require('mongodb').ObjectID;
 const LocalStrategy = require('passport-local');
+const bcrypt = require('bcrypt');
 
 const app = express();
 app.set('view engine', 'pug');
@@ -38,22 +39,22 @@ myDB(async (client) => {
     res.redirect('/profile');
   });
   app.route('/profile').get(ensureAuthenticated, (req, res) => {
-    res.render(process.cwd() + '/views/pug/profile', { username: req.user.username });
+    res.render('pug/profile', { username: req.user.username });
   });
   app.route('/logout').get((req, res) => {
     req.logout();
     res.redirect('/');
   });
-
   app.route('/register').post(
     (req, res, next) => {
+      const hash = bcrypt.hashSync(req.body.password, 12);
       myDataBase.findOne({ username: req.body.username }, function (err, user) {
         if (err) {
           next(err);
         } else if (user) {
           res.redirect('/');
         } else {
-          myDataBase.insertOne({ username: req.body.username, password: req.body.password }, (err, doc) => {
+          myDataBase.insertOne({ username: req.body.username, password: hash }, (err, doc) => {
             if (err) {
               res.redirect('/');
             } else {
@@ -85,7 +86,9 @@ myDB(async (client) => {
       myDataBase.findOne({ username: username }, function (err, user) {
         if (err) { return done(err); }
         if (!user) { return done(null, false); }
-        if (password !== user.password) { return done(null, false); }
+        if (!bcrypt.compareSync(password, user.password)) { 
+          return done(null, false);
+        }
         return done(null, user);
       });
     }
